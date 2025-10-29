@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiPedia</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <button class="ai-toggle" id="aiToggle" title="AI Assistant">
+                <span class="ai-icon">AI</span>
+            </button>
+            <h1 class="logo">MultiPedia</h1>
+            <button class="language-toggle" id="languageToggle" title="Переключить язык">
+                <span class="flag">🇷🇺</span>
+            </button>
+        </header>
+
+        <!-- Search Section -->
+        <div class="search-section" id="searchSection">
+            <div class="search-container">
+                <div class="search-input-wrapper">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="search-input" 
+                        placeholder="Поиск по миллионам статей..."
+                        autocomplete="off"
+                    >
+                    <button class="search-button" id="searchButton">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.35-4.35"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="search-suggestions" id="suggestions"></div>
+            </div>
+        </div>
+
+        <!-- Article Section -->
+        <div class="article-section" id="articleSection" style="display: none;">
+            <div class="article-header">
+                <button class="back-button" id="backButton">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Назад
+                </button>
+            </div>
+            <article class="article-content" id="articleContent"></article>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="image-modal" id="imageModal">
+        <div class="image-modal-overlay"></div>
+        <div class="image-modal-content">
+            <button class="image-modal-close" id="imageModalClose">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <img class="image-modal-img" id="imageModalImg" src="" alt="">
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
