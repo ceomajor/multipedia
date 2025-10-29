@@ -10,12 +10,21 @@ body {
     color: #e0e0e0;
     line-height: 1.6;
     min-height: 100vh;
+    overflow-x: hidden;
+    width: 100%;
+}
+
+html {
+    overflow-x: hidden;
+    width: 100%;
 }
 
 .container {
     max-width: 900px;
     margin: 0 auto;
     padding: 20px;
+    width: 100%;
+    overflow-x: hidden;
 }
 
 /* Header */
@@ -145,6 +154,7 @@ body {
     position: relative;
     display: flex;
     align-items: center;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .search-input {
@@ -167,6 +177,9 @@ body {
         0 0 25px rgba(100, 150, 255, 0.2),
         0 0 50px rgba(100, 150, 255, 0.15),
         0 4px 30px rgba(0, 0, 0, 0.3);
+}
+
+.search-input-wrapper:focus-within {
     transform: translateY(-1px);
 }
 
@@ -221,6 +234,8 @@ body {
 .search-button {
     position: absolute;
     right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
     width: 44px;
     height: 44px;
     background: linear-gradient(135deg, rgba(100, 150, 255, 0.2), rgba(80, 120, 200, 0.15));
@@ -232,17 +247,18 @@ body {
     align-items: center;
     justify-content: center;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
 }
 
 .search-button:hover {
     background: linear-gradient(135deg, rgba(100, 150, 255, 0.3), rgba(80, 120, 200, 0.25));
     border-color: rgba(100, 150, 255, 0.4);
     box-shadow: 0 0 15px rgba(100, 150, 255, 0.2);
-    transform: scale(1.05);
+    transform: translateY(-50%) scale(1.05);
 }
 
 .search-button:active {
-    transform: scale(0.95);
+    transform: translateY(-50%) scale(0.95);
 }
 
 
@@ -415,6 +431,9 @@ body {
     border: 1px solid #1a1a1a;
     border-radius: 12px;
     padding: 40px;
+    width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 .article-content h1 {
@@ -767,6 +786,8 @@ body {
 @media (max-width: 768px) {
     .container {
         padding: 15px;
+        max-width: 100vw;
+        overflow-x: hidden;
     }
 
     .header {
@@ -807,6 +828,13 @@ body {
     .article-content {
         padding: 20px 15px;
         border-radius: 8px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    .article-content * {
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .article-content h1 {
