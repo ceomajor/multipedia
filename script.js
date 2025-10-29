@@ -103,6 +103,16 @@ searchInput.addEventListener('input', (e) => {
     }, delay);
 });
 
+// Adjust suggestions height when input is focused (mobile keyboard appears)
+searchInput.addEventListener('focus', () => {
+    if (window.innerWidth <= 768) {
+        // Delay to let keyboard appear
+        setTimeout(() => {
+            adjustSuggestionsHeight();
+        }, 300);
+    }
+});
+
 // Click outside to close suggestions
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.search-container')) {
@@ -599,6 +609,11 @@ function displaySuggestions(results, enhancedQuery = null) {
         return;
     }
     
+    // On mobile, adjust suggestions height dynamically
+    if (window.innerWidth <= 768) {
+        adjustSuggestionsHeight();
+    }
+    
     let html = '';
     
     // Show AI enhancement notice if query was improved
@@ -670,6 +685,33 @@ function displaySuggestions(results, enhancedQuery = null) {
 function hideSuggestions() {
     suggestionsContainer.classList.remove('active');
     suggestionsContainer.innerHTML = '';
+}
+
+// Adjust suggestions height on mobile to avoid being cut off
+function adjustSuggestionsHeight() {
+    if (window.innerWidth > 768) return;
+    
+    // Use requestAnimationFrame for better timing
+    requestAnimationFrame(() => {
+        // Get the search input position
+        const searchInputRect = searchInput.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        
+        // Calculate available space below the search input
+        // Account for the gap (8px) and some bottom padding (20px)
+        const spaceBelow = viewportHeight - searchInputRect.bottom - 28;
+        
+        // Set max height to available space
+        // Minimum 150px, maximum 400px
+        const maxHeight = Math.max(150, Math.min(spaceBelow, 400));
+        
+        suggestionsContainer.style.maxHeight = `${maxHeight}px`;
+        
+        // Ensure suggestions are scrollable if content exceeds height
+        if (suggestionsContainer.scrollHeight > maxHeight) {
+            suggestionsContainer.style.overflowY = 'auto';
+        }
+    });
 }
 
 // Calculate water usage for cooling servers (approximate)
@@ -1141,6 +1183,13 @@ window.addEventListener('orientationchange', () => {
             wrapTablesForMobile();
         }, 100);
     }
+    
+    // Adjust suggestions height after orientation change
+    if (suggestionsContainer.classList.contains('active')) {
+        setTimeout(() => {
+            adjustSuggestionsHeight();
+        }, 300);
+    }
 });
 
 // Handle window resize
@@ -1152,5 +1201,25 @@ window.addEventListener('resize', () => {
         if (window.innerWidth <= 768 && articleSection.style.display === 'block') {
             wrapTablesForMobile();
         }
+        
+        // Adjust suggestions height if visible
+        if (suggestionsContainer.classList.contains('active') && window.innerWidth <= 768) {
+            adjustSuggestionsHeight();
+        }
     }, 250);
 });
+
+// Handle visual viewport changes (for mobile keyboard)
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+        if (suggestionsContainer.classList.contains('active') && window.innerWidth <= 768) {
+            adjustSuggestionsHeight();
+        }
+    });
+    
+    window.visualViewport.addEventListener('scroll', () => {
+        if (suggestionsContainer.classList.contains('active') && window.innerWidth <= 768) {
+            adjustSuggestionsHeight();
+        }
+    });
+}

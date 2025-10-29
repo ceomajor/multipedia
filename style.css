@@ -273,8 +273,10 @@ body {
     border-radius: 12px;
     max-height: 450px;
     overflow-y: auto;
+    overflow-x: hidden;
     display: none;
     z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .search-suggestions.active {
@@ -835,8 +837,26 @@ body {
     }
 
     .search-suggestions {
-        max-height: 60vh;
+        /* Dynamic height - will be set by JavaScript */
+        max-height: 400px;
         border-radius: 10px;
+        /* Keep absolute positioning relative to search container */
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(100% + 8px);
+        /* Ensure proper scrolling */
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        /* Better shadow for mobile */
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    .search-container {
+        position: relative;
+        /* Ensure container doesn't clip suggestions */
+        overflow: visible;
     }
 
     .suggestion-item {
