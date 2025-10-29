@@ -15,30 +15,11 @@ let searchTimeout;
 let selectedLanguage = 'ru'; // 'ru' or 'en'
 let aiModeEnabled = false;
 
-// Update viewport meta tag based on view
-function updateViewportMeta(isArticleView) {
-    let viewportMeta = document.querySelector('meta[name="viewport"]');
-    
-    if (!viewportMeta) {
-        viewportMeta = document.createElement('meta');
-        viewportMeta.name = 'viewport';
-        document.head.appendChild(viewportMeta);
-    }
-    
-    if (isArticleView) {
-        // For articles: disable zoom and scaling
-        viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-    } else {
-        // For main page: allow normal behavior
-        viewportMeta.content = 'width=device-width, initial-scale=1.0';
-    }
-}
-
 // Initialize
 searchInput.focus();
 
-// Initialize viewport on page load
-updateViewportMeta(false);
+// Set initial viewport for search page
+updateViewportForSearch();
 
 // AI toggle handler
 const aiToggle = document.getElementById('aiToggle');
@@ -678,12 +659,84 @@ function calculateWaterUsage(responseSize) {
     return Math.round(sizeInKB * waterPerKB * 10) / 10; // Round to 1 decimal
 }
 
+// Check if article is about Netanyahu
+function isNetanyahuArticle(title) {
+    const titleLower = title.toLowerCase();
+    return titleLower.includes('нетаньяху') || 
+           titleLower.includes('netanyahu') ||
+           titleLower.includes('биньямин') ||
+           titleLower.includes('benjamin') && titleLower.includes('нетан');
+}
+
+// Check if article is about Gaza War
+function isGazaWarArticle(title) {
+    const titleLower = title.toLowerCase();
+    
+    // Gaza + war/conflict keywords only
+    const gazaKeywords = ['газ', 'gaza'];
+    const warKeywords = [
+        'война', 'конфликт', 'вторжение', 'осада', 'бомбардировка',
+        'war', 'conflict', 'invasion', 'siege', 'bombing', 'attack',
+        'massacre', 'genocide'
+    ];
+    
+    // Check if title contains Gaza + war keyword
+    const hasGaza = gazaKeywords.some(keyword => titleLower.includes(keyword));
+    const hasWar = warKeywords.some(keyword => titleLower.includes(keyword));
+    
+    if (hasGaza && hasWar) return true;
+    
+    // Specific war/conflict article patterns
+    if (titleLower.includes('война израиля и хамас')) return true;
+    if (titleLower.includes('israel') && titleLower.includes('hamas') && titleLower.includes('war')) return true;
+    if (titleLower.includes('израильско-палестинский') && titleLower.includes('конфликт')) return true;
+    if (titleLower.includes('israeli') && titleLower.includes('palestinian') && titleLower.includes('conflict')) return true;
+    if (titleLower.includes('палестин') && (titleLower.includes('война') || titleLower.includes('конфликт'))) return true;
+    if (titleLower.includes('palestinian') && (titleLower.includes('war') || titleLower.includes('conflict'))) return true;
+    
+    return false;
+}
+
+// Extract main image from Wikipedia HTML
+function extractMainImage(html) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Look for infobox image first
+    const infoboxImg = tempDiv.querySelector('.infobox img, .vcard img, table.infobox img');
+    if (infoboxImg) {
+        let src = infoboxImg.getAttribute('src');
+        if (src && src.startsWith('//')) {
+            src = 'https:' + src;
+        }
+        return src;
+    }
+    
+    // Otherwise get first significant image
+    const images = tempDiv.querySelectorAll('img');
+    for (const img of images) {
+        let src = img.getAttribute('src');
+        if (src && !src.includes('icon') && !src.includes('logo')) {
+            if (src.startsWith('//')) {
+                src = 'https:' + src;
+            }
+            return src;
+        }
+    }
+    
+    return null;
+}
+
 // Load article content
 async function loadArticle(title, lang) {
     hideSuggestions();
     showArticleSection();
     
     articleContent.innerHTML = '<div class="loading">Загрузка статьи...</div>';
+    
+    // Check if this is Netanyahu or Gaza War article
+    const isNetanyahu = isNetanyahuArticle(title);
+    const isGazaWar = isGazaWarArticle(title);
     
     const apiUrl = lang === 'ru' ? WIKI_API_RU : WIKI_API_EN;
     
@@ -716,7 +769,87 @@ async function loadArticle(title, lang) {
         const waterUsage = calculateWaterUsage(responseSize);
         const loadTime = Math.round(endTime - startTime);
         
-        // Clean up Wikipedia HTML
+        // If Netanyahu article, extract main image and use custom content
+        if (isNetanyahu) {
+            const mainImage = extractMainImage(html);
+            
+            // Use custom content from netanyahu-content.js
+            const customContent = lang === 'ru' ? netanyahuContentRU : netanyahuContentEN;
+            
+            // Create image HTML if found
+            let imageHTML = '';
+            if (mainImage) {
+                imageHTML = `
+                    <div style="float: right; margin: 0 0 20px 20px; max-width: 300px;">
+                        <img src="${mainImage}" alt="Netanyahu" style="width: 100%; height: auto; border-radius: 8px; cursor: pointer;" class="netanyahu-main-img">
+                    </div>
+                `;
+            }
+            
+            // Create water usage info badge
+            const waterBadge = `
+                <div class="water-usage-badge" title="Приблизительное количество воды для охлаждения серверов">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                    </svg>
+                    <span>${waterUsage} мл воды</span>
+                    <span class="separator">•</span>
+                    <span>${loadTime} мс</span>
+                </div>
+            `;
+            
+            articleContent.innerHTML = `<h1>${data.parse.title}</h1>${waterBadge}${imageHTML}${customContent}`;
+            
+            // Setup image modal for the main image
+            setupImageModal();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            return;
+        }
+        
+        // If Gaza War article, extract main image and use custom content
+        if (isGazaWar) {
+            const mainImage = extractMainImage(html);
+            
+            // Use custom content from netanyahu-content.js
+            const customContent = lang === 'ru' ? gazaWarContentRU : gazaWarContentEN;
+            
+            // Create image HTML if found
+            let imageHTML = '';
+            if (mainImage) {
+                imageHTML = `
+                    <div style="float: right; margin: 0 0 20px 20px; max-width: 300px;">
+                        <img src="${mainImage}" alt="Gaza War" style="width: 100%; height: auto; border-radius: 8px; cursor: pointer;" class="gaza-main-img">
+                    </div>
+                `;
+            }
+            
+            // Create water usage info badge
+            const waterBadge = `
+                <div class="water-usage-badge" title="Приблизительное количество воды для охлаждения серверов">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                    </svg>
+                    <span>${waterUsage} мл воды</span>
+                    <span class="separator">•</span>
+                    <span>${loadTime} мс</span>
+                </div>
+            `;
+            
+            articleContent.innerHTML = `<h1>${data.parse.title}</h1>${waterBadge}${imageHTML}${customContent}`;
+            
+            // Setup image modal for the main image
+            setupImageModal();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            return;
+        }
+        
+        // Clean up Wikipedia HTML for normal articles
         html = cleanWikipediaHTML(html, lang);
         
         // Create water usage info badge
@@ -1026,9 +1159,8 @@ function showSearchSection() {
     searchInput.value = '';
     searchInput.focus();
     
-    // Remove article-view class and restore viewport for main page
-    document.body.classList.remove('article-view');
-    updateViewportMeta(false);
+    // Allow zooming on search page
+    updateViewportForSearch();
 }
 
 // Show article section
@@ -1036,9 +1168,24 @@ function showArticleSection() {
     searchSection.style.display = 'none';
     articleSection.style.display = 'block';
     
-    // Add article-view class and update viewport for article
-    document.body.classList.add('article-view');
-    updateViewportMeta(true);
+    // Prevent zooming on article pages
+    updateViewportForArticle();
+}
+
+// Update viewport meta tag for search page (allow zooming)
+function updateViewportForSearch() {
+    const viewport = document.getElementById('viewport');
+    if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0');
+    }
+}
+
+// Update viewport meta tag for article page (prevent zooming)
+function updateViewportForArticle() {
+    const viewport = document.getElementById('viewport');
+    if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+    }
 }
 
 // Handle browser back button
