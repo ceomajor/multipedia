@@ -15,11 +15,30 @@ let searchTimeout;
 let selectedLanguage = 'ru'; // 'ru' or 'en'
 let aiModeEnabled = false;
 
+// Update viewport meta tag based on view
+function updateViewportMeta(isArticleView) {
+    let viewportMeta = document.querySelector('meta[name="viewport"]');
+    
+    if (!viewportMeta) {
+        viewportMeta = document.createElement('meta');
+        viewportMeta.name = 'viewport';
+        document.head.appendChild(viewportMeta);
+    }
+    
+    if (isArticleView) {
+        // For articles: disable zoom and scaling
+        viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+    } else {
+        // For main page: allow normal behavior
+        viewportMeta.content = 'width=device-width, initial-scale=1.0';
+    }
+}
+
 // Initialize
 searchInput.focus();
 
-// Set initial viewport for search page
-updateViewportForSearch();
+// Initialize viewport on page load
+updateViewportMeta(false);
 
 // AI toggle handler
 const aiToggle = document.getElementById('aiToggle');
@@ -1007,8 +1026,9 @@ function showSearchSection() {
     searchInput.value = '';
     searchInput.focus();
     
-    // Allow zooming on search page
-    updateViewportForSearch();
+    // Remove article-view class and restore viewport for main page
+    document.body.classList.remove('article-view');
+    updateViewportMeta(false);
 }
 
 // Show article section
@@ -1016,24 +1036,9 @@ function showArticleSection() {
     searchSection.style.display = 'none';
     articleSection.style.display = 'block';
     
-    // Prevent zooming on article pages
-    updateViewportForArticle();
-}
-
-// Update viewport meta tag for search page (allow zooming)
-function updateViewportForSearch() {
-    const viewport = document.getElementById('viewport');
-    if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0');
-    }
-}
-
-// Update viewport meta tag for article page (prevent zooming)
-function updateViewportForArticle() {
-    const viewport = document.getElementById('viewport');
-    if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-    }
+    // Add article-view class and update viewport for article
+    document.body.classList.add('article-view');
+    updateViewportMeta(true);
 }
 
 // Handle browser back button

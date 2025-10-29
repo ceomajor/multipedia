@@ -11,20 +11,28 @@ body {
     line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
+}
+
+/* Prevent horizontal scroll in article view */
+body.article-view {
+    overflow-x: hidden;
+    width: 100%;
+    touch-action: pan-y pinch-zoom;
+}
+
+body.article-view .container {
+    overflow-x: hidden;
     width: 100%;
 }
 
-html {
-    overflow-x: hidden;
-    width: 100%;
+body.article-view .article-content {
+    touch-action: pan-y;
 }
 
 .container {
     max-width: 900px;
     margin: 0 auto;
     padding: 20px;
-    width: 100%;
-    overflow-x: hidden;
 }
 
 /* Header */
@@ -154,7 +162,6 @@ html {
     position: relative;
     display: flex;
     align-items: center;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .search-input {
@@ -177,9 +184,6 @@ html {
         0 0 25px rgba(100, 150, 255, 0.2),
         0 0 50px rgba(100, 150, 255, 0.15),
         0 4px 30px rgba(0, 0, 0, 0.3);
-}
-
-.search-input-wrapper:focus-within {
     transform: translateY(-1px);
 }
 
@@ -234,8 +238,6 @@ html {
 .search-button {
     position: absolute;
     right: 6px;
-    top: 50%;
-    transform: translateY(-50%);
     width: 44px;
     height: 44px;
     background: linear-gradient(135deg, rgba(100, 150, 255, 0.2), rgba(80, 120, 200, 0.15));
@@ -247,18 +249,17 @@ html {
     align-items: center;
     justify-content: center;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    flex-shrink: 0;
 }
 
 .search-button:hover {
     background: linear-gradient(135deg, rgba(100, 150, 255, 0.3), rgba(80, 120, 200, 0.25));
     border-color: rgba(100, 150, 255, 0.4);
     box-shadow: 0 0 15px rgba(100, 150, 255, 0.2);
-    transform: translateY(-50%) scale(1.05);
+    transform: scale(1.05);
 }
 
 .search-button:active {
-    transform: translateY(-50%) scale(0.95);
+    transform: scale(0.95);
 }
 
 
@@ -390,6 +391,9 @@ html {
 /* Article Section */
 .article-section {
     animation: fadeIn 0.3s ease;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
 }
 
 @keyframes fadeIn {
@@ -431,8 +435,15 @@ html {
     border: 1px solid #1a1a1a;
     border-radius: 12px;
     padding: 40px;
-    width: 100%;
     overflow-x: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.article-content * {
+    max-width: 100%;
     box-sizing: border-box;
 }
 
@@ -533,6 +544,7 @@ html {
 
 .article-content img {
     max-width: 100%;
+    width: 100%;
     height: auto;
     border-radius: 8px;
     margin: 20px 0;
@@ -540,6 +552,7 @@ html {
     border: 1px solid #2a2a2a;
     cursor: pointer;
     transition: all 0.3s ease;
+    object-fit: contain;
 }
 
 .article-content img:hover {
@@ -628,6 +641,8 @@ html {
     background: #1a1a1a;
     border-radius: 8px;
     overflow: hidden;
+    display: block;
+    overflow-x: auto;
 }
 
 .article-content th,
@@ -784,6 +799,11 @@ html {
 
 /* Responsive */
 @media (max-width: 768px) {
+    body {
+        overflow-x: hidden;
+        width: 100vw;
+    }
+    
     .container {
         padding: 15px;
         max-width: 100vw;
@@ -826,43 +846,35 @@ html {
     }
 
     .article-content {
-        padding: 20px 15px;
+        padding: 20px;
         border-radius: 8px;
-        max-width: 100%;
-        overflow-x: hidden;
-    }
-    
-    .article-content * {
-        max-width: 100%;
-        box-sizing: border-box;
     }
 
     .article-content h1 {
         font-size: 1.75rem;
-        line-height: 1.3;
         word-wrap: break-word;
         overflow-wrap: break-word;
     }
 
     .article-content h2 {
         font-size: 1.4rem;
-        line-height: 1.3;
         word-wrap: break-word;
         overflow-wrap: break-word;
     }
     
     .article-content h3 {
         font-size: 1.2rem;
-        line-height: 1.3;
         word-wrap: break-word;
         overflow-wrap: break-word;
     }
     
-    .article-content p {
-        font-size: 1rem;
-        line-height: 1.6;
+    .article-content p,
+    .article-content li,
+    .article-content td,
+    .article-content th {
         word-wrap: break-word;
         overflow-wrap: break-word;
+        hyphens: auto;
     }
     
     /* Make infobox and images full width on mobile */
@@ -877,51 +889,22 @@ html {
         float: none;
         margin: 20px 0;
         max-width: 100%;
-        width: 100%;
     }
     
     .article-content .thumbinner {
         max-width: 100%;
-        width: 100%;
+        width: 100% !important;
     }
     
-    .article-content img {
-        max-width: 100%;
-        height: auto;
-        width: 100%;
-        object-fit: contain;
-    }
-    
-    .article-content table {
-        display: block;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        font-size: 0.9rem;
-    }
-    
-    .article-content th,
-    .article-content td {
-        padding: 8px;
-        font-size: 0.85rem;
-    }
-    
-    .article-content ul,
-    .article-content ol {
-        margin-left: 20px;
-        padding-left: 10px;
-    }
-    
-    .article-content pre {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        font-size: 0.85rem;
+    .article-content .thumbinner img {
+        width: 100% !important;
+        height: auto !important;
     }
     
     .water-usage-badge {
         font-size: 0.75rem;
         padding: 6px 12px;
         gap: 6px;
-        flex-wrap: wrap;
     }
     
     .water-usage-badge svg {
@@ -945,12 +928,78 @@ html {
         max-height: 98vh;
     }
     
-    .search-section {
-        min-height: 30vh;
+    /* Prevent horizontal scroll in article view */
+    body.article-view {
+        overflow-x: hidden;
+        touch-action: pan-y;
+        position: relative;
     }
     
-    .back-button {
-        padding: 8px 16px;
+    body.article-view .container {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    body.article-view .article-section {
+        overflow-x: hidden;
+        width: 100%;
+    }
+    
+    /* Make all content fit within screen */
+    .article-content * {
+        max-width: 100%;
+    }
+    
+    .article-content pre {
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    
+    .article-content code {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    /* Ensure tables don't cause horizontal scroll */
+    .article-content table {
         font-size: 0.9rem;
+    }
+    
+    .article-content th,
+    .article-content td {
+        padding: 8px;
+        font-size: 0.85rem;
+    }
+    
+    /* Infobox images should fit properly */
+    .article-content .infobox img {
+        width: 100% !important;
+        height: auto !important;
+    }
+    
+    /* Fix for long URLs and text */
+    .article-content a {
+        word-break: break-word;
+    }
+    
+    /* Better spacing for mobile */
+    .article-content ul,
+    .article-content ol {
+        margin-left: 20px;
+        padding-right: 0;
+    }
+    
+    /* Ensure blockquotes fit */
+    .article-content blockquote {
+        padding-left: 15px;
+        margin: 15px 0;
+    }
+    
+    /* Fix figure captions */
+    .article-content figcaption,
+    .article-content .thumbcaption {
+        font-size: 0.8rem;
+        padding: 5px;
     }
 }
