@@ -16,7 +16,33 @@ let selectedLanguage = 'ru'; // 'ru' or 'en'
 let aiModeEnabled = false;
 
 // Initialize
-searchInput.focus();
+// Don't auto-focus on mobile to prevent keyboard popup
+if (window.innerWidth > 768) {
+    searchInput.focus();
+}
+
+// Prevent double-tap zoom on mobile
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (event) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+    }
+    lastTouchEnd = now;
+}, { passive: false });
+
+// Prevent pinch zoom
+document.addEventListener('gesturestart', (e) => {
+    e.preventDefault();
+});
+
+document.addEventListener('gesturechange', (e) => {
+    e.preventDefault();
+});
+
+document.addEventListener('gestureend', (e) => {
+    e.preventDefault();
+});
 
 // AI toggle handler
 const aiToggle = document.getElementById('aiToggle');
@@ -717,6 +743,11 @@ async function loadArticle(title, lang) {
         // Setup image modal
         setupImageModal();
         
+        // Wrap tables in scrollable containers on mobile
+        if (window.innerWidth <= 768) {
+            wrapTablesForMobile();
+        }
+        
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
@@ -997,18 +1028,44 @@ function setupInternalLinks(defaultLang) {
     });
 }
 
+// Wrap tables in scrollable containers for mobile
+function wrapTablesForMobile() {
+    articleContent.querySelectorAll('table').forEach(table => {
+        // Skip if already wrapped
+        if (table.parentElement.classList.contains('table-wrapper')) {
+            return;
+        }
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = 'table-wrapper';
+        wrapper.style.cssText = 'overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 20px 0;';
+        
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+    });
+}
+
 // Show search section
 function showSearchSection() {
     articleSection.style.display = 'none';
     searchSection.style.display = 'flex';
     searchInput.value = '';
-    searchInput.focus();
+    
+    // Don't auto-focus on mobile to prevent keyboard popup
+    if (window.innerWidth > 768) {
+        searchInput.focus();
+    }
 }
 
 // Show article section
 function showArticleSection() {
     searchSection.style.display = 'none';
     articleSection.style.display = 'block';
+    
+    // On mobile, scroll to top smoothly
+    if (window.innerWidth <= 768) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
 
 // Handle browser back button
@@ -1074,4 +1131,26 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && imageModal.classList.contains('active')) {
         closeImageModal();
     }
+});
+
+// Handle orientation change on mobile
+window.addEventListener('orientationchange', () => {
+    // Re-wrap tables if needed
+    if (window.innerWidth <= 768 && articleSection.style.display === 'block') {
+        setTimeout(() => {
+            wrapTablesForMobile();
+        }, 100);
+    }
+});
+
+// Handle window resize
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        // Re-wrap tables on mobile after resize
+        if (window.innerWidth <= 768 && articleSection.style.display === 'block') {
+            wrapTablesForMobile();
+        }
+    }, 250);
 });
