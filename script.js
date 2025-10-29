@@ -16,33 +16,10 @@ let selectedLanguage = 'ru'; // 'ru' or 'en'
 let aiModeEnabled = false;
 
 // Initialize
-// Don't auto-focus on mobile to prevent keyboard popup
-if (window.innerWidth > 768) {
-    searchInput.focus();
-}
+searchInput.focus();
 
-// Prevent double-tap zoom on mobile
-let lastTouchEnd = 0;
-document.addEventListener('touchend', (event) => {
-    const now = Date.now();
-    if (now - lastTouchEnd <= 300) {
-        event.preventDefault();
-    }
-    lastTouchEnd = now;
-}, { passive: false });
-
-// Prevent pinch zoom
-document.addEventListener('gesturestart', (e) => {
-    e.preventDefault();
-});
-
-document.addEventListener('gesturechange', (e) => {
-    e.preventDefault();
-});
-
-document.addEventListener('gestureend', (e) => {
-    e.preventDefault();
-});
+// Set initial viewport for search page
+updateViewportForSearch();
 
 // AI toggle handler
 const aiToggle = document.getElementById('aiToggle');
@@ -101,16 +78,6 @@ searchInput.addEventListener('input', (e) => {
     searchTimeout = setTimeout(() => {
         searchArticles(query);
     }, delay);
-});
-
-// Adjust suggestions height when input is focused (mobile keyboard appears)
-searchInput.addEventListener('focus', () => {
-    if (window.innerWidth <= 768) {
-        // Delay to let keyboard appear
-        setTimeout(() => {
-            adjustSuggestionsHeight();
-        }, 300);
-    }
 });
 
 // Click outside to close suggestions
@@ -609,11 +576,6 @@ function displaySuggestions(results, enhancedQuery = null) {
         return;
     }
     
-    // On mobile, adjust suggestions height dynamically
-    if (window.innerWidth <= 768) {
-        adjustSuggestionsHeight();
-    }
-    
     let html = '';
     
     // Show AI enhancement notice if query was improved
@@ -687,33 +649,6 @@ function hideSuggestions() {
     suggestionsContainer.innerHTML = '';
 }
 
-// Adjust suggestions height on mobile to avoid being cut off
-function adjustSuggestionsHeight() {
-    if (window.innerWidth > 768) return;
-    
-    // Use requestAnimationFrame for better timing
-    requestAnimationFrame(() => {
-        // Get the search input position
-        const searchInputRect = searchInput.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
-        
-        // Calculate available space below the search input
-        // Account for the gap (8px) and some bottom padding (20px)
-        const spaceBelow = viewportHeight - searchInputRect.bottom - 28;
-        
-        // Set max height to available space
-        // Minimum 150px, maximum 400px
-        const maxHeight = Math.max(150, Math.min(spaceBelow, 400));
-        
-        suggestionsContainer.style.maxHeight = `${maxHeight}px`;
-        
-        // Ensure suggestions are scrollable if content exceeds height
-        if (suggestionsContainer.scrollHeight > maxHeight) {
-            suggestionsContainer.style.overflowY = 'auto';
-        }
-    });
-}
-
 // Calculate water usage for cooling servers (approximate)
 function calculateWaterUsage(responseSize) {
     // Approximate calculation:
@@ -784,11 +719,6 @@ async function loadArticle(title, lang) {
         
         // Setup image modal
         setupImageModal();
-        
-        // Wrap tables in scrollable containers on mobile
-        if (window.innerWidth <= 768) {
-            wrapTablesForMobile();
-        }
         
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1070,33 +1000,15 @@ function setupInternalLinks(defaultLang) {
     });
 }
 
-// Wrap tables in scrollable containers for mobile
-function wrapTablesForMobile() {
-    articleContent.querySelectorAll('table').forEach(table => {
-        // Skip if already wrapped
-        if (table.parentElement.classList.contains('table-wrapper')) {
-            return;
-        }
-        
-        const wrapper = document.createElement('div');
-        wrapper.className = 'table-wrapper';
-        wrapper.style.cssText = 'overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 20px 0;';
-        
-        table.parentNode.insertBefore(wrapper, table);
-        wrapper.appendChild(table);
-    });
-}
-
 // Show search section
 function showSearchSection() {
     articleSection.style.display = 'none';
     searchSection.style.display = 'flex';
     searchInput.value = '';
+    searchInput.focus();
     
-    // Don't auto-focus on mobile to prevent keyboard popup
-    if (window.innerWidth > 768) {
-        searchInput.focus();
-    }
+    // Allow zooming on search page
+    updateViewportForSearch();
 }
 
 // Show article section
@@ -1104,9 +1016,23 @@ function showArticleSection() {
     searchSection.style.display = 'none';
     articleSection.style.display = 'block';
     
-    // On mobile, scroll to top smoothly
-    if (window.innerWidth <= 768) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Prevent zooming on article pages
+    updateViewportForArticle();
+}
+
+// Update viewport meta tag for search page (allow zooming)
+function updateViewportForSearch() {
+    const viewport = document.getElementById('viewport');
+    if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0');
+    }
+}
+
+// Update viewport meta tag for article page (prevent zooming)
+function updateViewportForArticle() {
+    const viewport = document.getElementById('viewport');
+    if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
     }
 }
 
@@ -1174,52 +1100,3 @@ document.addEventListener('keydown', (e) => {
         closeImageModal();
     }
 });
-
-// Handle orientation change on mobile
-window.addEventListener('orientationchange', () => {
-    // Re-wrap tables if needed
-    if (window.innerWidth <= 768 && articleSection.style.display === 'block') {
-        setTimeout(() => {
-            wrapTablesForMobile();
-        }, 100);
-    }
-    
-    // Adjust suggestions height after orientation change
-    if (suggestionsContainer.classList.contains('active')) {
-        setTimeout(() => {
-            adjustSuggestionsHeight();
-        }, 300);
-    }
-});
-
-// Handle window resize
-let resizeTimeout;
-window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-        // Re-wrap tables on mobile after resize
-        if (window.innerWidth <= 768 && articleSection.style.display === 'block') {
-            wrapTablesForMobile();
-        }
-        
-        // Adjust suggestions height if visible
-        if (suggestionsContainer.classList.contains('active') && window.innerWidth <= 768) {
-            adjustSuggestionsHeight();
-        }
-    }, 250);
-});
-
-// Handle visual viewport changes (for mobile keyboard)
-if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', () => {
-        if (suggestionsContainer.classList.contains('active') && window.innerWidth <= 768) {
-            adjustSuggestionsHeight();
-        }
-    });
-    
-    window.visualViewport.addEventListener('scroll', () => {
-        if (suggestionsContainer.classList.contains('active') && window.innerWidth <= 768) {
-            adjustSuggestionsHeight();
-        }
-    });
-}
