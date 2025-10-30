@@ -479,6 +479,38 @@ function enhanceQuery(query) {
     return query;
 }
 
+// Check for custom articles in search
+function getCustomArticleSuggestions(query, lang) {
+    const queryLower = query.toLowerCase();
+    const customResults = [];
+    
+    // Check for Manayeva
+    if (queryLower.includes('манаева') || queryLower.includes('айшат') || 
+        queryLower.includes('manayeva') || queryLower.includes('ayishat')) {
+        customResults.push({
+            title: lang === 'ru' ? 'Манаева Айшат' : 'Ayishat Manayeva',
+            description: lang === 'ru' ? 'Самая красивая девушка на свете' : 'The most beautiful girl in the world',
+            url: '#',
+            lang: lang,
+            isCustom: true
+        });
+    }
+    
+    // Check for Akhmadov
+    if (queryLower.includes('ахмадов') || queryLower.includes('сулим') || 
+        queryLower.includes('akhmadov') || queryLower.includes('sulim')) {
+        customResults.push({
+            title: lang === 'ru' ? 'Ахмадов Сулим' : 'Sulim Akhmadov',
+            description: lang === 'ru' ? 'Основатель MultiPedia' : 'Founder of MultiPedia',
+            url: '#',
+            lang: lang,
+            isCustom: true
+        });
+    }
+    
+    return customResults;
+}
+
 // Search articles from selected language Wikipedia
 async function searchArticles(query) {
     try {
@@ -487,6 +519,9 @@ async function searchArticles(query) {
         let layoutCorrected = null;
         
         let results = [];
+        
+        // First, check for custom articles
+        const customResults = getCustomArticleSuggestions(query, selectedLanguage);
         
         // AI mode: search with more results
         const limit = aiModeEnabled ? 8 : 5;
@@ -524,6 +559,9 @@ async function searchArticles(query) {
             const apiUrl = selectedLanguage === 'ru' ? WIKI_API_RU : WIKI_API_EN;
             results = await searchWikipedia(enhancedQuery, apiUrl, selectedLanguage, limit);
         }
+        
+        // Combine custom results with Wikipedia results (custom first)
+        results = [...customResults, ...results];
         
         // Show which correction was applied
         const correctionMessage = layoutCorrected || (query !== enhancedQuery ? enhancedQuery : null);
@@ -697,6 +735,24 @@ function isGazaWarArticle(title) {
     return false;
 }
 
+// Check if article is about Ayishat Manayeva
+function isManayevaArticle(title) {
+    const titleLower = title.toLowerCase();
+    return (titleLower.includes('манаева') && titleLower.includes('айшат')) ||
+           (titleLower.includes('айшат') && titleLower.includes('манаева')) ||
+           (titleLower.includes('manayeva') && titleLower.includes('ayishat')) ||
+           (titleLower.includes('ayishat') && titleLower.includes('manayeva'));
+}
+
+// Check if article is about Sulim Akhmadov
+function isAkhmadovArticle(title) {
+    const titleLower = title.toLowerCase();
+    return (titleLower.includes('ахмадов') && titleLower.includes('сулим')) ||
+           (titleLower.includes('сулим') && titleLower.includes('ахмадов')) ||
+           (titleLower.includes('akhmadov') && titleLower.includes('sulim')) ||
+           (titleLower.includes('sulim') && titleLower.includes('akhmadov'));
+}
+
 // Extract main image from Wikipedia HTML
 function extractMainImage(html) {
     const tempDiv = document.createElement('div');
@@ -734,9 +790,64 @@ async function loadArticle(title, lang) {
     
     articleContent.innerHTML = '<div class="loading">Загрузка статьи...</div>';
     
-    // Check if this is Netanyahu or Gaza War article
+    // Check if this is a custom article
     const isNetanyahu = isNetanyahuArticle(title);
     const isGazaWar = isGazaWarArticle(title);
+    const isManayeva = isManayevaArticle(title);
+    const isAkhmadov = isAkhmadovArticle(title);
+    
+    // Handle custom articles that don't exist in Wikipedia
+    if (isManayeva) {
+        const customContent = lang === 'ru' ? manayevaContentRU : manayevaContentEN;
+        const displayTitle = lang === 'ru' ? 'Манаева Айшат' : 'Ayishat Manayeva';
+        
+        const waterBadge = `
+            <div class="water-usage-badge" title="Приблизительное количество воды для охлаждения серверов">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                </svg>
+                <span>0.5 мл воды</span>
+                <span class="separator">•</span>
+                <span>10 мс</span>
+            </div>
+        `;
+        
+        articleContent.innerHTML = `<h1>${displayTitle}</h1>${waterBadge}${customContent}`;
+        
+        // Setup internal links
+        setupInternalLinks(lang);
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        return;
+    }
+    
+    if (isAkhmadov) {
+        const customContent = lang === 'ru' ? akhmadovContentRU : akhmadovContentEN;
+        const displayTitle = lang === 'ru' ? 'Ахмадов Сулим' : 'Sulim Akhmadov';
+        
+        const waterBadge = `
+            <div class="water-usage-badge" title="Приблизительное количество воды для охлаждения серверов">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                </svg>
+                <span>0.5 мл воды</span>
+                <span class="separator">•</span>
+                <span>10 мс</span>
+            </div>
+        `;
+        
+        articleContent.innerHTML = `<h1>${displayTitle}</h1>${waterBadge}${customContent}`;
+        
+        // Setup internal links
+        setupInternalLinks(lang);
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        return;
+    }
     
     const apiUrl = lang === 'ru' ? WIKI_API_RU : WIKI_API_EN;
     
